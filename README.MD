@@ -16,6 +16,6 @@ curl --location --request PATCH 'http://localhost:8081/api/v1/deployment/scale' 
 }'
 ```
 # Create local kind cluster
-1. kind create cluster --config kind-example-config.yaml
+1. `kind create cluster --config kind-example-config.yaml`
 2. switch context to kind
-3. kubectl apply -f test-deployment.yaml (for testing)
+3. `kubectl apply -f test-deployment.yaml` (for testing)
