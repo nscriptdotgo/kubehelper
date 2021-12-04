@@ -1,5 +1,5 @@
 # kubehelper
-This golang project patches the replicas field of a kubernetes deployment for scaling purposes, this project is mainly just for fun and learning, but perhaps could have a usecase for automation purposes.
+This golang project patches the replicas field of a kubernetes deployment for scaling purposes, this project is mainly just for fun and learning, but perhaps could have a usecase for automation for easy programmatic access.
 
 # Testing the project
 1. `go mody tidy`
