@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/noahjd/kube-scaler/pkg/k8sapiconn"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -21,7 +22,7 @@ import (
 type ScaleRequest struct {
 	Deployment string `json:"deployment"`
 	Namespace  string `json:"namespace"`
-	Replicas    int32  `json:"replicas"`
+	Replicas   int32  `json:"replicas"`
 }
 
 func int32Ptr(i int32) *int32 { return &i }

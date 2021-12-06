@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  kube-helper-api
+  namespace: default
+  labels:
+    app:  kube-helper-api
+spec:
+  selector:
+    matchLabels:
+      app: kube-helper-api
+  replicas: 1 
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app:  kube-helper-api
+    spec:
+      containers:
+      - name:  kube-helper-api
+        image: <REGISTRY_ADDRESS>:0.0.1
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        ports:
+        - containerPort:  80
+      serviceAccountName: kube-helper-api
+      restartPolicy: Always
+      imagePullSecrets:
+        - name: <REGISTRY_SECRET>
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kube-helper-api
+  namespace: default
+spec:
+  selector:
+    app: kube-helper-api
+  type: ClusterIP
+  ports:
+  - name: kube-helper-api
+    protocol: TCP
+    port: 8080
+    targetPort: 80
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: default
+  name: kube-helper-api
+rules:
+- apiGroups: ["apps"]
+  resources: ["deployments","deployments/scale","deployments/status"]
+  verbs: ["get", "watch", "list","patch","update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kube-helper-api-role-binding
+  namespace: default
+subjects:
+- kind: ServiceAccount
+  name: kube-helper-api
+roleRef:
+  kind: Role
+  name: kube-helper-api
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kube-helper-api
+  namespace: default
