@@ -3,19 +3,19 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"flag"
 	"fmt"
-	"github.com/noahjd/kube-scaler/pkg/k8sapiconn"
+	"os"
+	// "github.com/noahjd/kube-scaler/pkg/k8sapiconn"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"path/filepath"
 
-	apiv1 "k8s.io/api/core/v1"
+	// apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/util/homedir"
+	"k8s.io/client-go/rest"
+	// "k8s.io/client-go/util/homedir"
 	"k8s.io/client-go/util/retry"
 )
 
@@ -27,24 +27,22 @@ type ScaleRequest struct {
 
 func int32Ptr(i int32) *int32 { return &i }
 
-func scaleDeployment(w http.ResponseWriter, r *http.Request) {
-	var kubeconfig *string
-	if home := homedir.HomeDir(); home != "" {
-		kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
-	} else {
-		kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
-	}
-	flag.Parse()
-	config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
+func getKubernetesClientset() *kubernetes.Clientset {
+	var conf *rest.Config
+	conf, err := clientcmd.BuildConfigFromFlags("", os.Getenv("HOME")+"/.kube/config")
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
-	clientset, err := kubernetes.NewForConfig(config)
+	clientset, err := kubernetes.NewForConfig(conf)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
-	var deploymentsClient = clientset.AppsV1().Deployments(apiv1.NamespaceDefault)
 
+	return clientset
+}
+
+func scaleDeployment(w http.ResponseWriter, r *http.Request) {
+	clientset := getKubernetesClientset()
 	var patchUpdateObject ScaleRequest
 	reqBody, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
@@ -53,7 +51,7 @@ func scaleDeployment(w http.ResponseWriter, r *http.Request) {
 	}
 	json.Unmarshal(reqBody, &patchUpdateObject)
 
-	fmt.Print(patchUpdateObject.Deployment)
+	log.Print(patchUpdateObject)
 	if err != nil {
 		fmt.Fprintf(w, "Something happened during unmarshaling")
 	}
@@ -61,13 +59,14 @@ func scaleDeployment(w http.ResponseWriter, r *http.Request) {
 	retryErr := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		// Retrieve the latest version of Deployment before attempting update
 		// RetryOnConflict uses exponential backoff to avoid exhausting the apiserver
-		result, getErr := deploymentsClient.Get(context.TODO(), patchUpdateObject.Deployment, metav1.GetOptions{})
+		// result, getErr := deploymentsClient.Get(context.TODO(), patchUpdateObject.Deployment, metav1.GetOptions{})
+		result, getErr := clientset.AppsV1().Deployments(patchUpdateObject.Namespace).Get(context.TODO(), patchUpdateObject.Deployment, metav1.GetOptions{})
 		if getErr != nil {
 			panic(fmt.Errorf("Failed to get latest version of Deployment: %v", getErr))
 		}
 
 		result.Spec.Replicas = int32Ptr(patchUpdateObject.Replicas)
-		_, updateErr := deploymentsClient.Update(context.TODO(), result, metav1.UpdateOptions{})
+		_, updateErr := clientset.AppsV1().Deployments(patchUpdateObject.Namespace).Update(context.TODO(), result, metav1.UpdateOptions{})
 		return updateErr
 	})
 	if retryErr != nil {
@@ -75,12 +74,14 @@ func scaleDeployment(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleRequests() {
+// func handleRequests() {
+// 	http.HandleFunc("/api/v1/deployment/scale", scaleDeployment)
+// 	// http.HandleFunc("/api/v1/deployment/list", getDeployment).Methods("GET")
+// 	log.Fatal(http.ListenAndServe(":8081", nil))
+// }
+
+func main() {
 	http.HandleFunc("/api/v1/deployment/scale", scaleDeployment)
 	// http.HandleFunc("/api/v1/deployment/list", getDeployment).Methods("GET")
 	log.Fatal(http.ListenAndServe(":8081", nil))
-}
-
-func main() {
-	handleRequests()
 }
