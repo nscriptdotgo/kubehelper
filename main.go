@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+
 	// "github.com/noahjd/kube-scaler/pkg/k8sapiconn"
 	"io/ioutil"
 	"log"
@@ -13,11 +14,16 @@ import (
 	// apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+
 	// "k8s.io/client-go/util/homedir"
 	"k8s.io/client-go/util/retry"
 )
+
+type ScaleResponse struct {
+	Message	string `json:"message"`
+}
 
 type ScaleRequest struct {
 	Deployment string `json:"deployment"`
@@ -39,6 +45,14 @@ func getKubernetesClientset() *kubernetes.Clientset {
 	}
 
 	return clientset
+}
+
+func healthCheck(w http.ResponseWriter, r *http.Request) {
+	err := json.NewEncoder(w).Encode("Healthy")
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		log.Fatal("Endpoint not healthy")
+	}
 }
 
 func scaleDeployment(w http.ResponseWriter, r *http.Request) {
@@ -72,16 +86,12 @@ func scaleDeployment(w http.ResponseWriter, r *http.Request) {
 	if retryErr != nil {
 		panic(fmt.Errorf("Update failed: %v", retryErr))
 	}
+	json.NewEncoder(w).Encode("Deployment scaled")
 }
-
-// func handleRequests() {
-// 	http.HandleFunc("/api/v1/deployment/scale", scaleDeployment)
-// 	// http.HandleFunc("/api/v1/deployment/list", getDeployment).Methods("GET")
-// 	log.Fatal(http.ListenAndServe(":8081", nil))
-// }
 
 func main() {
 	http.HandleFunc("/api/v1/deployment/scale", scaleDeployment)
+	http.HandleFunc("/health", healthCheck)
 	// http.HandleFunc("/api/v1/deployment/list", getDeployment).Methods("GET")
 	log.Fatal(http.ListenAndServe(":8081", nil))
 }
