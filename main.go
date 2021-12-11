@@ -5,19 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-
-	// "github.com/noahjd/kube-scaler/pkg/k8sapiconn"
 	"io/ioutil"
 	"log"
 	"net/http"
 
-	// apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-
-	// "k8s.io/client-go/util/homedir"
 	"k8s.io/client-go/util/retry"
 )
 
@@ -81,9 +76,6 @@ func podCount(w http.ResponseWriter, r *http.Request) {
 	log.Print(podCountRequest)
 
 	retryErr := retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		// Retrieve the latest version of Deployment before attempting update
-		// RetryOnConflict uses exponential backoff to avoid exhausting the apiserver
-		// result, getErr := deploymentsClient.Get(context.TODO(), patchDeploymentUpdate.Deployment, metav1.GetOptions{})
 		result, getErr := clientset.AppsV1().Deployments(podCountRequest.Namespace).Get(context.TODO(), podCountRequest.Deployment, metav1.GetOptions{})
 		if getErr != nil {
 			panic(fmt.Errorf("Failed to get latest version of Deployment: %v", getErr))
@@ -114,9 +106,6 @@ func scaleDeployment(w http.ResponseWriter, r *http.Request) {
 	log.Print(patchDeploymentUpdate)
 
 	retryErr := retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		// Retrieve the latest version of Deployment before attempting update
-		// RetryOnConflict uses exponential backoff to avoid exhausting the apiserver
-		// result, getErr := deploymentsClient.Get(context.TODO(), patchDeploymentUpdate.Deployment, metav1.GetOptions{})
 		result, getErr := clientset.AppsV1().Deployments(patchDeploymentUpdate.Namespace).Get(context.TODO(), patchDeploymentUpdate.Deployment, metav1.GetOptions{})
 		if getErr != nil {
 			panic(fmt.Errorf("Failed to get latest version of Deployment: %v", getErr))
@@ -130,7 +119,6 @@ func scaleDeployment(w http.ResponseWriter, r *http.Request) {
 		panic(fmt.Errorf("Update failed: %v", retryErr))
 	}
 	scaleResponseMessage.Message = "Deployment Scaled"
-	// json.Marshal()
 	json.NewEncoder(w).Encode(scaleResponseMessage)
 }
 
