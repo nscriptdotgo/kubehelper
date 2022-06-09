@@ -1,0 +1,33 @@
+jobs:
+- job: BuildAndScan
+  displayName: Build and Scan
+  steps:
+  - template: ../steps/debug-vars.yaml
+
+  - bash: |
+      docker build -t $(dockerImage):$(imageTag) .
+    displayName: Docker - build
+
+- job: DockerPush
+  displayName: Push
+  dependsOn: BuildAndScan
+  steps:
+  - template: ../steps/debug-vars.yaml
+
+  - bash: |
+      go build
+    displayName: Build GoLang
+
+  - task: Docker@2
+    displayName: Docker - Login
+    inputs:
+      command: login
+      containerRegistry: $(acrConnection)
+
+  - template: ../steps/append-sha.yaml
+
+  - bash: |
+      docker build -t $(dockerImage):$(imageTag) .
+      docker push $(dockerImage):$(imageTag)
+    displayName: Docker - Build and Push
+

@@ -1,0 +1,13 @@
+jobs:
+- job: FormatCode
+  displayName: Audit Dependencies
+  steps:
+  - script: go fmt
+    displayName: Format Code (Dev)
+    continueOnError: true
+
+- job: GoTest
+  displayName: Test Code
+  steps:
+  - script: go test
+    displayName: Run go test
