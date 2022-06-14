@@ -1,0 +1,32 @@
+variables:
+
+  # ARM
+  armConnection:    golang-demo-rg-conn
+  acrConnection:    golang-demo-acr-conn
+  resourceGroup:    golang-demo-rg
+  storageAccount:   demoassetpipeline
+  cdnProfileName:   demoassetpipeline
+
+  # Pipeline conditions
+  # isMain:           ${{ eq(variables['Build.SourceBranch'], 'refs/heads/main') }}
+  # isProduction:     ${{ eq(variables['Build.SourceBranch'], 'refs/heads/production') }}
+  # isTag:            ${{ startsWith(variables['Build.SourceBranch'], 'refs/tags/v') }}
+  # isFork:           ${{ eq(variables['System.PullRequest.IsFork'], 'True') }}
+  # isPR:             ${{ eq(variables['Build.Reason'], 'PullRequest') }}
+  # isScheduled:      ${{ eq(variables['Build.Reason'], 'Schedule') }}
+  # isTrustedCI:      ${{ and( eq(variables.isFork,'False'), eq(variables.isPR,'False'), eq(variables.isScheduled,'False') ) }}
+  # deployMain:       ${{ and( eq(variables.isMain,'True'), eq(variables.isTrustedCI,'True') ) }}
+
+  # Docker
+  dockerRegistry:   golangdemo.azurecr.io
+  imageName:        azure-golang-demo
+  ${{ if eq(variables.isTag, 'False') }}:
+    imageTag:       dev
+  ${{ if eq(variables.isTag, 'True') }}:
+    imageTag:       ${{ replace(variables['Build.SourceBranch'], 'refs/tags/v', '') }}
+  dockerImage:      ${{ variables.dockerRegistry }}/${{ variables.imageName }}
+
+  # To be overwritten by dev.yaml or prod.yaml
+  webAppName:    unset
+  blobContainer: unset
+  cdnEndpoint:   unset

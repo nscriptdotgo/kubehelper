@@ -1,9 +1,9 @@
 jobs:
 - job: FormatCode
-  displayName: Audit Dependencies
+  displayName: format the code
   steps:
   - script: go fmt
-    displayName: Format Code (Dev)
+    displayName: Format Code
     continueOnError: true
 
 - job: GoTest

@@ -20,3 +20,7 @@ stages:
     jobs:
       - template: jobs/build.yaml
 
+  - stage: Deploy golang code
+    displayName: Deploy the code
+    jobs:
+      - template: jobs/deploy.yaml

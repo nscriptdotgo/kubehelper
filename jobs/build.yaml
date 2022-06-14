@@ -1,6 +1,6 @@
 jobs:
-- job: BuildAndScan
-  displayName: Build and Scan
+- job: Build
+  displayName: Build
   steps:
   - template: ../steps/debug-vars.yaml
 
@@ -10,7 +10,7 @@ jobs:
 
 - job: DockerPush
   displayName: Push
-  dependsOn: BuildAndScan
+  dependsOn: Build
   steps:
   - template: ../steps/debug-vars.yaml
 
@@ -18,11 +18,13 @@ jobs:
       go build
     displayName: Build GoLang
 
-  - task: Docker@2
-    displayName: Docker - Login
+  - task: Docker@1
+    displayName: 'Push the Docker image to Dockerhub'
     inputs:
-      command: login
-      containerRegistry: $(acrConnection)
+      containerregistrytype: 'Container Registry'
+      dockerRegistryEndpoint: 'Docker Hub'
+      command: 'Push an image'
+      imageName: '$(ImageName)'
 
   - template: ../steps/append-sha.yaml
 
