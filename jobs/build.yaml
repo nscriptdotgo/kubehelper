@@ -1,35 +1,8 @@
 jobs:
-- job: Build
-  displayName: Build
-  steps:
-  - template: ../steps/debug-vars.yaml
+- job: GoBuild
+  displayName: Go Build
 
   - bash: |
-      docker build -t $(dockerImage):$(imageTag) .
-    displayName: Docker - build
-
-- job: DockerPush
-  displayName: Push
-  dependsOn: Build
-  steps:
-  - template: ../steps/debug-vars.yaml
-
-  - bash: |
-      go build
+      go build 
     displayName: Build GoLang
-
-  - task: Docker@1
-    displayName: 'Push the Docker image to Dockerhub'
-    inputs:
-      containerregistrytype: 'Container Registry'
-      dockerRegistryEndpoint: 'Docker Hub'
-      command: 'Push an image'
-      imageName: '$(ImageName)'
-
-  - template: ../steps/append-sha.yaml
-
-  - bash: |
-      docker build -t $(dockerImage):$(imageTag) .
-      docker push $(dockerImage):$(imageTag)
-    displayName: Docker - Build and Push
 

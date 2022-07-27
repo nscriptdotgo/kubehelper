@@ -1,0 +1,7 @@
+jobs:
+- job: GoDeploy
+  displayName: Deploy code
+
+  - bash: |
+      echo "Deploying Code"
+    displayName: Deploy GoLang
